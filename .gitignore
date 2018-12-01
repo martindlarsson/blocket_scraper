@@ -1,0 +1,6 @@
+*.db
+__pycache__
+*.cvs
+blocket-env/*
+.DS_Store
+.vscode
