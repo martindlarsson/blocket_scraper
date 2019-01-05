@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import datatyper
+import datetime
+
 
 # Parse the 
 def parse_add_refs(base_url, start_page, pages_batch_size):
@@ -117,7 +119,24 @@ def parse_add(add_ref):
         time_tag = soup.find('time')
         if (time_tag is not None):
             add_date = time_tag['datetime'].strip()
+        
+        now = datetime.datetime.now()
 
-        add = datatyper.Car_Add(id = add_ref.id, regnr = "", price = price, brand = brand, model = model, model_year = model_year, make_year = make_year, gear = grear, fuel = fuel, milage = milage, type = car_type, hp = hp, geo = geo, add_date = add_date)
+        add = datatyper.Car_Add(id = add_ref.id
+            ,regnr = ""
+            ,price = price
+            ,brand = brand
+            ,model = model
+            ,model_year = model_year
+            ,make_year = make_year
+            ,gear = grear
+            ,fuel = fuel
+            ,milage = milage
+            ,type = car_type
+            ,hp = hp
+            ,geo = geo
+            ,add_date = add_date
+            ,first_seen = now
+            ,last_seen = now)
 
         return add

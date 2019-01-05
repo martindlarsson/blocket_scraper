@@ -15,6 +15,7 @@ add_refs_saved = 0
 
 batch_size_db = 1000
 
+
 # Parse all adds on "first page"
 start_page = 1
 page_batch_size = 20
@@ -148,6 +149,12 @@ except Exception as exc:
 
 
 logg.save(message = 'Klar med att skrapa uppdaterade annonser. ' + str(adds_not_parsed) + ' av ' + str(len(updated_add_refs)) + ' uppdaterade annonser kunde inte skrapas.')
+
+# touch the rest of the adds with the last_seen date
+no_updated_adds = database.update_all_seen_adds()
+
+# Log
+logg.save(message = 'Uppdaterat ' + str(no_updated_adds) + ' annonser med last_seen-datum')
 
 
 # clean staging table

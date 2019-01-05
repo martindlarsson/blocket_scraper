@@ -6,7 +6,7 @@ class Annons_ref:
         self.price = price
 
 class Car_Add:
-    def __init__(self, id, regnr, price, brand, model, model_year, make_year, gear, fuel, milage, type, hp, geo, add_date):
+    def __init__(self, id, regnr, price, brand, model, model_year, make_year, gear, fuel, milage, type, hp, geo, add_date, first_seen, last_seen):
         self.id = id
         self.regnr = regnr
         self.price = price
@@ -21,3 +21,5 @@ class Car_Add:
         self.hp = hp
         self.geo = geo
         self.add_date = add_date
+        self.first_seen = first_seen
+        self.last_seen = last_seen

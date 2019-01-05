@@ -21,7 +21,9 @@ sql_create_car_add_table = """ CREATE TABLE IF NOT EXISTS car_adds (
                                         type TEXT NOT NULL,
                                         hp TEXT,
                                         geo TEXT,
-                                        add_date DATETIME
+                                        add_date DATETIME,
+                                        first_seen DATE,
+                                        last_seen DATE
                                     ); """
 
 
@@ -30,7 +32,7 @@ sql_create_car_add_price_table = """ CREATE TABLE IF NOT EXISTS car_add_prices (
                                         car_add_id nvarchar(16) NOT NULL,
                                         price INT NOT NULL,
                                         add_date DATETIME NOT NULL,
-                                        PRIMARY KEY (car_add_id, add_date),
+                                        PRIMARY KEY (car_add_id, price),
                                         FOREIGN KEY (car_add_id) REFERENCES car_adds(id)
                                     ); """
 
@@ -46,11 +48,11 @@ sql_create_car_add_ref_table = """ CREATE TABLE IF NOT EXISTS car_add_refs (
 sql_truncate_car_adds_ref_table = """ DELETE FROM car_add_refs; """
 
 
-sql_insert_car_add = ''' INSERT INTO car_adds(id, regnr, price, brand, model, model_year, make_year, gear, fuel, milage, type, hp, geo, add_date)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
+sql_insert_car_add = ''' INSERT INTO car_adds(id, regnr, price, brand, model, model_year, make_year, gear, fuel, milage, type, hp, geo, add_date, first_seen, last_seen)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
 
 
-sql_update_car_add = ''' UPDATE car_adds SET price = ?, add_date = ?
+sql_update_car_add = ''' UPDATE car_adds SET price = ?, add_date = ?, last_seen = ?
         WHERE id = ? '''
 
 
@@ -59,6 +61,13 @@ sql_insert_prices = ''' INSERT OR REPLACE INTO car_add_prices(car_add_id, price,
 
 
 sql_insert_add_refs = ''' INSERT OR REPLACE INTO car_add_refs(id, link, price) VALUES(?,?,?) '''
+
+
+sql_update_adds_last_seen = '''
+    UPDATE car_adds
+    SET last_seen = ?
+    WHERE car_adds.id IN (SELECT id FROM car_add_refs)
+    '''
 
 
 
@@ -89,7 +98,7 @@ def insert_car_adds(car_adds):
     prices = []
 
     for car_add in car_adds:
-        adds.append((car_add.id, car_add.regnr, car_add.price, car_add.brand, car_add.model, car_add.model_year, car_add.make_year, car_add.gear, car_add.fuel, car_add.milage, car_add.type, car_add.hp, car_add.geo, car_add.add_date))
+        adds.append((car_add.id, car_add.regnr, car_add.price, car_add.brand, car_add.model, car_add.model_year, car_add.make_year, car_add.gear, car_add.fuel, car_add.milage, car_add.type, car_add.hp, car_add.geo, car_add.add_date, car_add.first_seen, car_add.last_seen))
         prices.append((car_add.id, car_add.price, car_add.add_date))
 
     try:
@@ -123,7 +132,7 @@ def update_car_adds(car_adds):
     prices = []
 
     for car_add in car_adds:
-        adds.append((car_add.price, car_add.id, car_add.add_date))
+        adds.append((car_add.price, car_add.id, car_add.last_seen, car_add.add_date))
         prices.append((car_add.id, car_add.price, car_add.add_date))
 
     try:
@@ -288,3 +297,31 @@ def get_all_updated_adds():
     finally:
         if conn is not None:
             conn.close
+
+
+
+def update_all_seen_adds():
+
+    updated_items = 0
+    now = str(datetime.datetime.now())
+
+    try:
+        conn = create_connection()
+        if conn is not None:
+            try:
+                curr = conn.cursor()
+                curr.execute(sql_update_adds_last_seen, (now,))
+                updated_items = curr.rowcount
+            except Exception as exc:
+                logg.save("Error updating add refs with last_seen. Exception: " + str(exc))
+        
+            conn.commit()
+        else:
+            print("Error in update_all_seen_adds! cannot create the database connection.")
+    except Exception as exc:
+        logg.save("Error in update_all_seen_adds! Exception: " + str(exc))
+    finally:
+        if conn is not None:
+            conn.close
+        return updated_items
+
